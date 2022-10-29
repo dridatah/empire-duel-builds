@@ -31,7 +31,6 @@ var EmpireWaxClient = (function() {
       isAnchorWallet: () => waxWallet === "anchor",
       isAnchorError: e => e === "anchorerr",
       getTokenBalance: async (waxAddress = null) => {
-        console.log(waxAddress, "hello");
         waxAddress = waxAddress ? waxAddress : waxActor;
         if (!waxAddress) {
           return -1;
@@ -41,7 +40,9 @@ var EmpireWaxClient = (function() {
           waxAddress,
           1
         );
-        return result[0] ? Number(result[0].balance.split(" ")[0]) : 0;
+        return result.rows[0]
+          ? Number(result.rows[0].balance.split(" ")[0])
+          : 0;
       },
       loginWithCloud: async () => {
         try {
@@ -110,14 +111,6 @@ var EmpireWaxClient = (function() {
           TOKEN_CONTRACT
         );
       },
-      getTokenBalance: async userAddress => {
-        return await instance.getRow(
-          "accounts",
-          1,
-          userAddress,
-          TOKEN_CONTRACT
-        );
-      },
       getTokenRowScoped: async (table, scope, pid) => {
         return await instance.getRow(table, pid, scope, TOKEN_CONTRACT);
       },
@@ -132,13 +125,12 @@ var EmpireWaxClient = (function() {
       },
       getRow: async (table, pid, scope, code) => {
         try {
-          var result = await instance.connectCloud().get_table_rows({
+          var result = await instance.connectCloud().rpc.get_table_rows({
             json: true,
             code: code,
             scope: scope,
             table: table,
             lower_bound: pid,
-            upper_bound: pid,
             reverse: false,
             show_payer: false
           });
@@ -154,7 +146,7 @@ var EmpireWaxClient = (function() {
       },
       getTable: async (table, scope, code, limit = 100, isReverse = false) => {
         try {
-          var result = await instance.connectCloud().get_table_rows({
+          var result = await instance.connectCloud().rpc.get_table_rows({
             json: true,
             code: code,
             scope: scope,
