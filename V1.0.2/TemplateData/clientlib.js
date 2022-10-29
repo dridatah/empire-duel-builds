@@ -174,6 +174,7 @@ var EmpireWaxClient = (function() {
         });
       },
       transferToken: async (quantity, memo = "") => {
+        console.log(quantity, "hello");
         // quantity 6 precision asset: 10.000000 EDL
         return await instance.runAction(TOKEN_CONTRACT, "transfer", {
           from: waxActor,
