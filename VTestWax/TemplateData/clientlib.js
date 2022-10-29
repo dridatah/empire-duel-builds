@@ -40,7 +40,7 @@ var EmpireWaxClient = (function() {
           waxAddress,
           1
         );
-        return result.rows[0] ? Number(result.rows[0].balance.split(" ")[0]) : 0;
+        return result[0] ? Number(result[0].balance.split(" ")[0]) : 0;
       },
       loginWithCloud: async () => {
         try {
@@ -106,6 +106,14 @@ var EmpireWaxClient = (function() {
           table,
           pid,
           TOKEN_CONTRACT,
+          TOKEN_CONTRACT
+        );
+      },
+      getTokenBalance: async userAddress => {
+        return await instance.getRow(
+          "accounts",
+          1,
+          userAddress,
           TOKEN_CONTRACT
         );
       },
