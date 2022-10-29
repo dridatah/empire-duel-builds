@@ -31,6 +31,7 @@ var EmpireWaxClient = (function() {
       isAnchorWallet: () => waxWallet === "anchor",
       isAnchorError: e => e === "anchorerr",
       getTokenBalance: async (waxAddress = null) => {
+        console.log(waxAddress, "hello");
         waxAddress = waxAddress ? waxAddress : waxActor;
         if (!waxAddress) {
           return -1;
