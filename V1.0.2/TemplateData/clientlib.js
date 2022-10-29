@@ -40,7 +40,7 @@ var EmpireWaxClient = (function() {
           waxAddress,
           1
         );
-        return result[0] ? Number(result[0].balance.split(" ")[0]) : 0;
+        return result.rows[0] ? Number(result.rows[0].balance.split(" ")[0]) : 0;
       },
       loginWithCloud: async () => {
         try {
