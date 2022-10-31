@@ -70,7 +70,7 @@ var EmpireWaxClient = (function () {
         });
       },
       // FETCHING FUNCTIONS
-      getAssets: async (schema, page, limit = 10) => {
+      getAssets: async (schema, page, limit = 50) => {
         // check node_modules/atomicassets/build/API/Explorer/index.js file
         // for all simplified usage of the AA API
         const aa = instance.getAA();
