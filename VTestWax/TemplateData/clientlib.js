@@ -227,7 +227,7 @@ var EmpireWaxClient = (function () {
         } else {
           if (!_anchorSession) {
             console.log("No Anchor login set");
-            await loginWithAnchor();
+            await instance.loginWithAnchor();
           }
           var result = await _anchorSession.transact({ action });
           const anchorResult =
