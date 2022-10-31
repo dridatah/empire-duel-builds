@@ -1,4 +1,4 @@
-var EmpireWaxClient = (function() {
+var EmpireWaxClient = (function () {
   const TESTNET_AA_ENDPOINT = "https://test.wax.api.atomicassets.io";
   const MAINNET_AA_ENDPOINT = "https://api.waxtest.alohaeos.com";
   const TESTNET_ENDPOINT = "https://api.waxtest.alohaeos.com";
@@ -226,13 +226,14 @@ var EmpireWaxClient = (function() {
           }
         } else {
           if (!_anchorSession) {
-            return "No Anchor login set";
+            console.log("No Anchor login set");
+            await loginWithAnchor();
           }
           var result = await _anchorSession.transact({ action });
           const anchorResult =
             result.transaction &&
-            result.transaction.id &&
-            result.transaction.id.hexString
+              result.transaction.id &&
+              result.transaction.id.hexString
               ? false
               : "anchorerr";
           return anchorResult;
@@ -290,7 +291,7 @@ var EmpireWaxClient = (function() {
   }
 
   return {
-    getInstance: function(isTest = false) {
+    getInstance: function (isTest = false) {
       if (!instance) {
         instance = createInstance(isTest);
       }
