@@ -1,0 +1,30 @@
+{
+	"ForestAxe": {
+		"templates": [
+			{
+				"name": "Wax",
+				"id": "522375"
+			},
+			{
+				"name": "Solana",
+				"id": "8cFL8pqjt2NHvKAzcwdjVPvaXKfzpaUPqB2TDaGSat9n"
+			}
+		],
+		"type": "Regular",
+		"name": "Forest Axe"
+	},
+	"Tractor": {
+		"templates": [
+			{
+				"name": "Wax",
+				"id": "12345"
+			},
+			{
+				"name": "Solana",
+				"id": "4efdsffw43ew333efet42gf"
+			}
+		],
+		"type": "Regular",
+		"name": "Tractor"
+	}
+}
