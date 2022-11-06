@@ -2,5 +2,9 @@
   "example-template-metadata": {
     "templateId": "522375",
     "type": "tools"
+  },
+  "wood-axe": {
+    "templateId": "522375",
+    "type": "tools"
   }
 }

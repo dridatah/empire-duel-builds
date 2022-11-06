@@ -8,6 +8,10 @@ const ARGS_SCHEMAS = {
   deposit: {
     user: "pubkey",
     amount: "u64"
+  },
+  validation: {
+    user: "pubkey",
+    code: "u64"
   }
 };
 
@@ -25,12 +29,15 @@ var EmpireSolClient = (function() {
   );
   const TOKEN = new solanaWeb3.PublicKey(
     "4rxhygepn3zBnDfV2XzjziAryDJgtCfk95MSLVLYi6FQ"
-  );
+  ); // EDL actually...
   const TOKEN_ACCOUNT = new solanaWeb3.PublicKey(
     "92qWZbhp1jMJfKPkcaMzHm5x1XgiKnBNhiJwdbBAVxkb"
   );
   const GAME_ACCOUNT = new solanaWeb3.PublicKey(
     "Eu2zKbD1mAGMwg1wNQZJz8F13KwWTKEx3cZTwMUhDAXE"
+  );
+  const CONFIG_ACCOUNT = new solanaWeb3.PublicKey(
+    "38UCnLxtBCJtSuykuV4UwMx7LXxkgnykAV3Fb9YBTytC"
   );
   const MAINNET_ENDPOINT = "";
 
@@ -59,6 +66,17 @@ var EmpireSolClient = (function() {
         if (!obj) return null;
         if (!obj.isPhantom) return null;
         return window.phantom.solana;
+      },
+      setWallet: async address => {
+        if (!provider) throw "Call init first";
+        userPublicKey = new solanaWeb3.PublicKey(address);
+        const resp = await provider.connect();
+        if (address != resp.publicKey.toBase58()) {
+          userPublicKey = null;
+          provider.disconnect();
+          return false;
+        }
+        return true;
       },
       connect: async () => {
         try {
@@ -139,14 +157,51 @@ var EmpireSolClient = (function() {
           instance.getSchema(schemaName)
         );
       },
-      getPAD: async (seed, address = null) => {
-        if (!address) address = userPublicKey;
-        let addrBuf = userPublicKey.toBuffer();
-        let seedBuf = Buffer.from(seed, "utf8");
-        return (await PublicKey.findProgramAddress(
-          [addrBuf, seedBuf],
+      getPDA: async seeds => {
+        let buffers = seeds.map(seed => {
+          if (typeof seed === "string") {
+            return Buffer.from(seed, "utf8");
+          } else if (typeof seed === "number") {
+            return Buffer.from([seed]);
+          } else {
+            return seed.toBuffer();
+          }
+        });
+        return (await solanaWeb3.PublicKey.findProgramAddress(
+          buffers,
           PROGRAM
         ))[0];
+      },
+      validateSolAddress: async uniqueCode => {
+        let acc = await instance.getPDA([
+          "soladdrrval",
+          PROGRAM,
+          userPublicKey
+        ]);
+        let connection = instance.createConnection();
+        let trx = new solanaWeb3.Transaction();
+        trx.add(
+          instance.createInstruction(
+            instance.convertToBytes(
+              "validate",
+              { user: userPublicKey, code: uniqueCode },
+              ARGS_SCHEMAS.validation
+            ),
+            [acc, CONFIG_ACCOUNT],
+            false
+          )
+        );
+        try {
+          let blockhash = (await connection.getLatestBlockhash("finalized"))
+            .blockhash;
+          trx.recentBlockhash = blockhash;
+          trx.feePayer = userPublicKey;
+          const { signature } = await provider.signAndSendTransaction(trx);
+          return { isError: false, transactionID: signature };
+        } catch (e) {
+          console.error(e);
+          return { isError: true, errorCode: e.code, errorMessage: e.message };
+        }
       },
       transferTokenToGame: async (amount, postInstructions = []) => {
         return instance.transferToken(TOKEN_ACCOUNT, amount, postInstructions);
@@ -199,41 +254,22 @@ var EmpireSolClient = (function() {
             userPublicKey
           );
 
-          let tryToAssocTokenAddress = await splToken.getAssociatedTokenAddress(
+          let toAssocTokenAddress = await splToken.getAssociatedTokenAddress(
             asset.mintAddress,
-            GAME_ACCOUNT
+            GAME_ACCOUNT,
+            false
           );
 
-          let toAssocTokenAddress;
-          var newTokenAccount = solanaWeb3.Keypair.generate();
-          var doSign = false;
-          try {
-            let checkToAssocTokenAddress = await splToken.getAccount(
-              connection,
-              tryToAssocTokenAddress
-            );
-            toAssocTokenAddress = checkToAssocTokenAddress.address;
-          } catch (e) {
-            transaction.add(
-              solanaWeb3.SystemProgram.createAccount({
-                fromPubkey: userPublicKey,
-                newAccountPubkey: newTokenAccount.publicKey,
-                space: splToken.ACCOUNT_SIZE,
-                lamports: await splToken.getMinimumBalanceForRentExemptAccount(
-                  connection
-                ),
-                programId: splToken.TOKEN_PROGRAM_ID
-              }),
-              // init token account
-              splToken.createInitializeAccountInstruction(
-                newTokenAccount.publicKey,
-                asset.mintAddress,
-                GAME_ACCOUNT
-              )
-            );
-            doSign = true;
-            toAssocTokenAddress = newTokenAccount.publicKey;
-          }
+          console.log(`ata: ${toAssocTokenAddress.toBase58()}`);
+
+          transaction.add(
+            splToken.createAssociatedTokenAccountInstruction(
+              userPublicKey, // payer
+              toAssocTokenAddress, // ata
+              GAME_ACCOUNT, // owner
+              asset.mintAddress // mint
+            )
+          );
 
           transaction.add(
             splToken.createTransferCheckedInstruction(
@@ -253,7 +289,7 @@ var EmpireSolClient = (function() {
           blockhash = blockhash.blockhash;
           transaction.recentBlockhash = blockhash;
           transaction.feePayer = userPublicKey;
-          if (doSign) transaction.sign(newTokenAccount);
+          // if (doSign) transaction.sign(newTokenAccount);
           const { signature } = await provider.signAndSendTransaction(
             transaction
           );
@@ -263,17 +299,14 @@ var EmpireSolClient = (function() {
           return { isError: true, errorCode: e.code, errorMessage: e.message };
         }
       },
-      createInstruction: (data, pad = null, useSystem = false) => {
-        let keys = pad
-          ? [
-              {
-                pubkey: userPublicKey,
-                isSigner: true,
-                isWritable: true
-              },
-              { pubkey: pad, isSigner: false, isWritable: true }
-            ]
-          : [{ pubkey: userPublicKey, isSigner: true, isWritable: true }];
+      createInstruction: (data, pad = [], useSystem = false) => {
+        let keys = [
+          { pubkey: userPublicKey, isSigner: true, isWritable: true }
+        ];
+
+        keys = keys.concat(
+          pad.map(p => ({ pubkey: p, isSigner: false, isWritable: true }))
+        );
 
         if (useSystem) {
           keys.push({
@@ -326,6 +359,116 @@ var EmpireSolClient = (function() {
               buf.writeBigUInt64BE(BigInt(data[k]), 0);
               bufs.push(buf);
               bufsSize += buf.length;
+              break;
+          }
+        }
+
+        return Buffer.concat(bufs, bufsSize);
+      },
+      convertToBytes: (action, data, schema) => {
+        var buf1 = Buffer.from(action);
+        var buf0 = Buffer.from([buf1.length]);
+
+        var bufs = [buf0, buf1];
+        var bufsSize = buf0.length + buf1.length;
+
+        var arr = Object.keys(data);
+        for (var i = 0; i < arr.length; i++) {
+          var k = arr[i];
+
+          let sk = schema[k].constructor === Array ? schema[k][0] : schema[k];
+          let sc = schema[k].constructor === Array ? schema[k][1] : 1;
+          if (!data.hasOwnProperty(k)) continue;
+          if (!data[k]) {
+            console.error("Schema must have all keys, convertToBytes");
+            return null;
+          }
+
+          let buf;
+
+          switch (sk) {
+            case "pubkey":
+              if (sc === 1) {
+                buf = new solanaWeb3.PublicKey(data[k]).toBuffer();
+                bufs.push(buf);
+                bufsSize += buf.length;
+                if (buf.length !== 32) {
+                  throw "Invalid SOL account address";
+                }
+              } else {
+                for (let j = 0; j < sc; j++) {
+                  buf = new solanaWeb3.PublicKey(data[k][j]).toBuffer();
+                  bufs.push(buf);
+                  bufsSize += buf.length;
+                  if (buf.length !== 32) {
+                    throw "Invalid SOL account address";
+                  }
+                }
+              }
+              break;
+            case "u64":
+              if (sc === 1) {
+                if (isNaN(Number(data[k]))) {
+                  throw "Invalid u64";
+                }
+                buf = Buffer.allocUnsafe(8);
+                buf.writeBigUInt64BE(BigInt(data[k]), 0);
+                bufs.push(buf);
+                bufsSize += buf.length;
+              } else {
+                for (let j = 0; j < sc; j++) {
+                  if (isNaN(Number(data[k][j]))) {
+                    throw "Invalid u64";
+                  }
+                  buf = Buffer.allocUnsafe(8);
+                  buf.writeBigUInt64BE(BigInt(data[k][j]), 0);
+                  bufs.push(buf);
+                  bufsSize += buf.length;
+                }
+              }
+              break;
+            case "u8":
+              if (sc === 1) {
+                if (isNaN(Number(data[k]))) {
+                  throw "Invalid u8";
+                }
+                buf = Buffer.allocUnsafe(1);
+                buf.writeUInt8(data[k], 0);
+                bufs.push(buf);
+                bufsSize += buf.length;
+              } else {
+                for (let j = 0; j < sc; j++) {
+                  if (isNaN(Number(data[k][j]))) {
+                    throw "Invalid u8";
+                  }
+                  buf = Buffer.allocUnsafe(1);
+                  buf.writeUInt8(data[k][j], 0);
+                  bufs.push(buf);
+                  bufsSize += buf.length;
+                }
+              }
+
+              break;
+            case "i64":
+              if (sc === 1) {
+                if (isNaN(Number(data[k]))) {
+                  throw "Invalid i64";
+                }
+                buf = Buffer.allocUnsafe(8);
+                buf.writeBigInt64BE(BigInt(data[k]), 0);
+                bufs.push(buf);
+                bufsSize += buf.length;
+              } else {
+                for (let j = 0; j < sc; i++) {
+                  if (isNaN(Number(data[k][j]))) {
+                    throw "Invalid i64";
+                  }
+                  buf = Buffer.allocUnsafe(8);
+                  buf.writeBigInt64BE(BigInt(data[k][j]), 0);
+                  bufs.push(buf);
+                  bufsSize += buf.length;
+                }
+              }
               break;
           }
         }
