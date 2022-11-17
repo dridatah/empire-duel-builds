@@ -76,7 +76,7 @@ var EmpireWaxClient = (function () {
         const aa = instance.getAA();
         return await aa.getAssets({
           collection_name: COLLECTION_NAME,
-          schema_name: schema,
+          schema_name: "energy",
           owner: waxActor,
           page: page,
           limit: limit
