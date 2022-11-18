@@ -70,13 +70,13 @@ var EmpireWaxClient = (function () {
         });
       },
       // FETCHING FUNCTIONS
-      getAssets: async (schema, page, limit = 50) => {
+      getAssets: async (schema, page, limit = 10) => {
         // check node_modules/atomicassets/build/API/Explorer/index.js file
         // for all simplified usage of the AA API
         const aa = instance.getAA();
         return await aa.getAssets({
           collection_name: COLLECTION_NAME,
-          schema_name: "energy",
+          schema_name: schema,
           owner: waxActor,
           page: page,
           limit: limit
@@ -225,11 +225,9 @@ var EmpireWaxClient = (function () {
             return e.toString();
           }
         } else {
-          if (!_anchorSession) {
-            console.log("No Anchor login set");
-            await instance.loginWithAnchor();
-          }
-          var result = await _anchorSession.transact({ action });
+          const anchorLink = instance.connectAnchor();
+          var result = await anchorLink.transact({ action });
+          console.log(result);
           const anchorResult =
             result.transaction &&
               result.transaction.id &&
@@ -286,6 +284,15 @@ var EmpireWaxClient = (function () {
           ]
         });
         return link;
+      },
+      getAllAssets: async (page = 1, limit = 100) => {
+        var schemas = ["tools", "energy"];
+        var assets = [];
+        for (let schemaId of schemas) {
+          var items = await instance.getAssets(schemaId, page, limit);
+          assets.push(...items);
+        }
+        return assets;
       }
     };
   }
