@@ -15,7 +15,7 @@ const ARGS_SCHEMAS = {
   }
 };
 
-var EmpireSolClient = (function() {
+var EmpireSolClient = (function () {
   var instance;
   var provider;
   var userPublicKey = null;
@@ -25,7 +25,7 @@ var EmpireSolClient = (function() {
   var assetsCache = [];
 
   const PROGRAM = new solanaWeb3.PublicKey(
-    "6A9mRBWJhxBgN6zDBFqZUpigsbKZ4UU44QgCbx4vYr35"
+    "CyyfmzuwCfSFkyz3ASkxdv1ikjPcKGGyTkoZeg3G8YLC"
   );
   const TOKEN = new solanaWeb3.PublicKey(
     "4rxhygepn3zBnDfV2XzjziAryDJgtCfk95MSLVLYi6FQ"
@@ -37,7 +37,7 @@ var EmpireSolClient = (function() {
     "Eu2zKbD1mAGMwg1wNQZJz8F13KwWTKEx3cZTwMUhDAXE"
   );
   const CONFIG_ACCOUNT = new solanaWeb3.PublicKey(
-    "38UCnLxtBCJtSuykuV4UwMx7LXxkgnykAV3Fb9YBTytC"
+    "Ab9jHLrZrqNdouobkVxXjwCwQkDUPjuXhX23kMpeNEG2"
   );
   const MAINNET_ENDPOINT = "";
 
@@ -259,8 +259,6 @@ var EmpireSolClient = (function() {
             GAME_ACCOUNT,
             false
           );
-
-          console.log(`ata: ${toAssocTokenAddress.toBase58()}`);
 
           transaction.add(
             splToken.createAssociatedTokenAccountInstruction(
@@ -544,12 +542,21 @@ var EmpireSolClient = (function() {
         }
 
         return rv;
+      },
+      getAllAssets: async () => {
+        var schemas = ["tools", "energy", "boosters"];
+        var assets = [];
+        for (let schemaId of schemas) {
+          var items = await instance.getAssets(schemaId);
+          assets.push(...items);
+        }
+        return assets;
       }
     };
   }
 
   return {
-    getInstance: function(isTest = false) {
+    getInstance: function (isTest = false) {
       if (!instance) {
         instance = createInstance(isTest);
       }
