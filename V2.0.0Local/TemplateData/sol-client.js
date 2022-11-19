@@ -124,18 +124,20 @@ var EmpireSolClient = (function () {
       getAssets: async (schema = null) => {
         let mp = instance.getMetaplex();
         let result = await mp.findAllByOwner({ owner: userPublicKey });
-        assetsCache = result
-          .map(item => {
-            let template = instance.getTemplate(instance.getKey(item.uri));
-            if (!template) return null;
-            if (schema && template.type !== schema) return null;
-            return {
-              templateId: template.templateId,
-              address: item.address,
-              mintAddress: item.mintAddress
-            };
-          })
-          .filter(item => item !== null);
+        assetsCache = assetsCache.concat(
+          result
+            .map(item => {
+              let template = instance.getTemplate(instance.getKey(item.uri));
+              if (!template) return null;
+              if (schema && template.type !== schema) return null;
+              return {
+                templateId: template.templateId,
+                address: item.address,
+                mintAddress: item.mintAddress
+              };
+            })
+            .filter(item => item !== null)
+        );
         return assetsCache;
       },
       getKey: v => {
