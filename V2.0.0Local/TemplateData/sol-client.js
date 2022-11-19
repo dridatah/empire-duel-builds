@@ -124,21 +124,21 @@ var EmpireSolClient = (function () {
       getAssets: async (schema = null) => {
         let mp = instance.getMetaplex();
         let result = await mp.findAllByOwner({ owner: userPublicKey });
-        assetsCache = assetsCache.concat(
-          result
-            .map(item => {
-              let template = instance.getTemplate(instance.getKey(item.uri));
-              if (!template) return null;
-              if (schema && template.type !== schema) return null;
-              return {
-                templateId: template.templateId,
-                address: item.address,
-                mintAddress: item.mintAddress
-              };
-            })
-            .filter(item => item !== null)
-        );
-        return assetsCache;
+        let assets = result
+          .map(item => {
+            let template = instance.getTemplate(instance.getKey(item.uri));
+            if (!template) return null;
+            if (schema && template.type !== schema) return null;
+            return {
+              templateId: template.templateId,
+              address: item.address,
+              mintAddress: item.mintAddress
+            };
+          })
+          .filter(item => item !== null);
+
+        assetsCache = assetsCache.concat(assets);
+        return assets;
       },
       getKey: v => {
         let arr = v.split("/");
@@ -250,8 +250,7 @@ var EmpireSolClient = (function () {
 
         for (let i = 0; i < assets.length; i++) {
           let asset = instance.getAssetCache(assets[i]);
-          console.log("Asset", asset, assets[i], assetsCache);
-          return;
+          console.log("Transfer Assets", asset, assets[i], assetsCache);
           let fromAssocTokenAddress = await splToken.getAssociatedTokenAddress(
             asset.mintAddress,
             userPublicKey
