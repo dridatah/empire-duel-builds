@@ -248,7 +248,8 @@ var EmpireSolClient = (function () {
 
         for (let i = 0; i < assets.length; i++) {
           let asset = instance.getAssetCache(assets[i]);
-
+          console.log("Asset", asset, assets[i], assetsCache);
+          return;
           let fromAssocTokenAddress = await splToken.getAssociatedTokenAddress(
             asset.mintAddress,
             userPublicKey
