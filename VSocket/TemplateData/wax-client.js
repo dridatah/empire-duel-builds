@@ -250,17 +250,17 @@ var EmpireWaxClient = (function() {
         return await instance.runActions(actions);
       },
       getBridgeTokenCost: async () => {
-        let config = await _client.getGameTable("config");
+        let config = await instance.getGameTable("config");
         var quantity = config.rows.find(it => it.key === "tknbcost").int_value;
         return quantity / 100000000;
       },
       getBridgeNFTCost: async () => {
-        let config = await _client.getGameTable("config");
+        let config = await instance.getGameTable("config");
         var quantity = config.rows.find(it => it.key === "nftbcost").int_value;
         return quantity / 100000000;
       },
       bridgeNFT: async (asset, to) => {
-        let config = await _client.getGameTable("config");
+        let config = await instance.getGameTable("config");
         var quantity = config.rows.find(it => it.key === "nftbcost").int_value;
         var memo = `bridge:${quantity},0,${asset},0,${to}`;
         const actions = [
@@ -302,7 +302,7 @@ var EmpireWaxClient = (function() {
       },
       bridgeToken: async (amount, to) => {
         amount = Number(amount);
-        let config = await _client.getGameTable("config");
+        let config = await instance.getGameTable("config");
         var quantity = config.rows.find(it => it.key === "tknbcost").int_value;
         var memo = `bridge:${quantity},1,0,${amount * EDL_DECIMALS},${to}`;
         const actions = [
