@@ -301,6 +301,8 @@ var EmpireWaxClient = (function() {
         return await instance.runActions(actions);
       },
       bridgeToken: async (amount, to) => {
+        console.log("Wax Bridge Token Called");
+
         amount = Number(amount);
         let config = await instance.getGameTable("config");
         var quantity = config.rows.find(it => it.key === "tknbcost").int_value;

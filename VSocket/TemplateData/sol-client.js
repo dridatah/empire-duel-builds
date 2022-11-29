@@ -854,6 +854,7 @@ var EmpireSolClient = (function () {
         return quantity / 1000000000;
       },
       bridgeToken: async (amount, to) => {
+        console.log("Sol Bridge Token Called");
         amount = Number(amount);
         let config = await instance.getAccountData(CONFIG_ACCOUNT, "configs");
 
@@ -1264,7 +1265,7 @@ var EmpireSolClient = (function () {
         }
         return assets;
       }
-      
+
     };
   }
 
