@@ -1,7 +1,7 @@
-var EmpireWaxClient = (function () {
+var EmpireWaxClient = (function() {
   const TESTNET_AA_ENDPOINT = "https://test.wax.api.atomicassets.io";
   const MAINNET_AA_ENDPOINT = "https://api.waxtest.alohaeos.com";
-  const TESTNET_ENDPOINT = "https://api.waxtest.alohaeos.com";
+  const TESTNET_ENDPOINT = "https://waxtest.eu.eosamsterdam.net";
   const MAINNET_ENDPOINT = "https://api.waxtest.alohaeos.com";
   const TEST_CHAIN_ID =
     "f16b1833c747c43682f4386fca9cbb327929334a762755ebec17f6f23c9b8a12";
@@ -11,6 +11,8 @@ var EmpireWaxClient = (function () {
   const TOKEN_CONTRACT = "empireduelst";
 
   const COLLECTION_NAME = "empireduelsx";
+
+  const EDL_DECIMALS = 1000000;
 
   var instance;
   var _anchorSession = null;
@@ -123,6 +125,15 @@ var EmpireWaxClient = (function () {
         const aa = instance.getAA();
         return await aa.fetchEndpoint("/v1/" + pathPart + "/" + waxActor, data);
       },
+      getWAXBalance: async () => {
+        let result = await instance.getRow(
+          "balances",
+          waxActor,
+          "edwaxdeposit",
+          "edwaxdeposit"
+        );
+        return result.rows[0] ? result.rows[0].balance / 100000000 : 0;
+      },
       getRow: async (table, pid, scope, code) => {
         try {
           var result = await instance.connectCloud().rpc.get_table_rows({
@@ -188,22 +199,158 @@ var EmpireWaxClient = (function () {
       },
       // low level
       runAction: async (account, name, data) => {
+        return await instance.runActions([
+          {
+            account: account,
+            name: name,
+            authorization: [
+              {
+                actor: waxActor,
+                permission: "active"
+              }
+            ],
+            data: data
+          }
+        ]);
+      },
+      createToken: (q, sym, d) => {
+        var str = (q / Math.pow(10, d)).toFixed(d);
+        var arr = str.split(".");
+        if (!arr[1]) {
+          let zeros = "";
+          for (let i = 0; i < d; i++) zeros += "0";
+          return arr[0] + "." + zeros + " " + sym;
+        } else {
+          for (let i = 0; i < d - arr[1].length; i++) {
+            arr[1] += "0";
+          }
+          return arr[0] + "." + arr[1] + " " + sym;
+        }
+      },
+      transferWAX: async (to, amount) => {
+        const actions = [
+          {
+            account: "eosio.token",
+            name: "transfer",
+            authorization: [
+              {
+                actor: waxActor,
+                permission: "active"
+              }
+            ],
+            data: {
+              from: waxActor,
+              to: to,
+              quantity: instance.createToken(amount, "WAX", 8),
+              memo: ""
+            }
+          }
+        ];
+
+        return await instance.runActions(actions);
+      },
+      getBridgeTokenCost: async () => {
+        let config = await instance.getGameTable("config");
+        var quantity = config.rows.find(it => it.key === "tknbcost").int_value;
+        return quantity / 100000000;
+      },
+      getBridgeNFTCost: async () => {
+        let config = await instance.getGameTable("config");
+        var quantity = config.rows.find(it => it.key === "nftbcost").int_value;
+        return quantity / 100000000;
+      },
+      bridgeNFT: async (asset, to) => {
+        let config = await instance.getGameTable("config");
+        var quantity = config.rows.find(it => it.key === "nftbcost").int_value;
+        var memo = `bridge:${quantity},0,${asset},0,${to}`;
+        const actions = [
+          {
+            account: "eosio.token",
+            name: "transfer",
+            authorization: [
+              {
+                actor: waxActor,
+                permission: "active"
+              }
+            ],
+            data: {
+              from: waxActor,
+              to: GAME_CONTRACT,
+              quantity: instance.createToken(quantity, "WAX", 8),
+              memo
+            }
+          },
+          {
+            account: "atomicassets",
+            name: "transfer",
+            authorization: [
+              {
+                actor: waxActor,
+                permission: "active"
+              }
+            ],
+            data: {
+              from: waxActor,
+              to: GAME_CONTRACT,
+              asset_ids: [asset],
+              memo
+            }
+          }
+        ];
+
+        return await instance.runActions(actions);
+      },
+      bridgeToken: async (amount, to) => {
+        console.log("Wax Bridge Token Called");
+
+        amount = Number(amount);
+        let config = await instance.getGameTable("config");
+        var quantity = config.rows.find(it => it.key === "tknbcost").int_value;
+        var memo = `bridge:${quantity},1,0,${amount * EDL_DECIMALS},${to}`;
+        const actions = [
+          {
+            account: "eosio.token",
+            name: "transfer",
+            authorization: [
+              {
+                actor: waxActor,
+                permission: "active"
+              }
+            ],
+            data: {
+              from: waxActor,
+              to: GAME_CONTRACT,
+              quantity: instance.createToken(quantity, "WAX", 8),
+              memo
+            }
+          },
+          {
+            account: "empireduelst",
+            name: "transfer",
+            authorization: [
+              {
+                actor: waxActor,
+                permission: "active"
+              }
+            ],
+            data: {
+              from: waxActor,
+              to: GAME_CONTRACT,
+              quantity: instance.createToken(amount * EDL_DECIMALS, "EDL", 6),
+              memo
+            }
+          }
+        ];
+
+        return await instance.runActions(actions);
+      },
+      // low level
+      runActions: async actions => {
         // returns false on success
         if (!waxActor) {
           console.log("Wax actor is undefined");
           return "WaxJS not loaded";
         }
-        const action = {
-          account: account,
-          name: name,
-          authorization: [
-            {
-              actor: waxActor,
-              permission: "active"
-            }
-          ],
-          data: data
-        };
         if (!waxWallet) {
           return "No login set";
         }
@@ -212,7 +359,7 @@ var EmpireWaxClient = (function () {
           try {
             await wax.api.transact(
               {
-                actions: [action]
+                actions: actions
               },
               {
                 blocksBehind: 3,
@@ -225,13 +372,15 @@ var EmpireWaxClient = (function () {
             return e.toString();
           }
         } else {
+          // if (!_anchorSession) {
+          //   return "No Anchor login set";
+          // }
           const anchorLink = instance.connectAnchor();
-          var result = await anchorLink.transact({ action });
-          console.log(result);
+          var result = await anchorLink.transact({ actions });
           const anchorResult =
             result.transaction &&
-              result.transaction.id &&
-              result.transaction.id.hexString
+            result.transaction.id &&
+            result.transaction.id.hexString
               ? false
               : "anchorerr";
           return anchorResult;
@@ -298,7 +447,7 @@ var EmpireWaxClient = (function () {
   }
 
   return {
-    getInstance: function (isTest = false) {
+    getInstance: function(isTest = false) {
       if (!instance) {
         instance = createInstance(isTest);
       }
