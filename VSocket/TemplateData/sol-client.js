@@ -1257,7 +1257,7 @@ var EmpireSolClient = (function () {
       },
 
       getAllAssets: async () => {
-        var schemas = ["tools", "energy", "boosters"];
+        var schemas = ["tools", "energy", "boosters", "chests"];
         var assets = [];
         for (let schemaId of schemas) {
           var items = await instance.getAssets(schemaId);
