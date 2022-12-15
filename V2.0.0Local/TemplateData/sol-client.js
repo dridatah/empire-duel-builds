@@ -305,7 +305,7 @@ var EmpireSolClient = (function () {
                   throw "Invalid u64";
                 }
                 buf = Buffer.allocUnsafe(8);
-                buf.writeBigUInt64LE(BigInt(data[k]), 0);
+                buf.writeBigUInt64BE(BigInt(data[k]), 0);
                 bufs.push(buf);
                 bufsSize += buf.length;
               } else {
@@ -314,7 +314,7 @@ var EmpireSolClient = (function () {
                     throw "Invalid u64";
                   }
                   buf = Buffer.allocUnsafe(8);
-                  buf.writeBigUInt64LE(BigInt(data[k][j]), 0);
+                  buf.writeBigUInt64BE(BigInt(data[k][j]), 0);
                   bufs.push(buf);
                   bufsSize += buf.length;
                 }
@@ -348,7 +348,7 @@ var EmpireSolClient = (function () {
                   throw "Invalid i64";
                 }
                 buf = Buffer.allocUnsafe(8);
-                buf.writeBigInt64LE(BigInt(data[k]), 0);
+                buf.writeBigInt64BE(BigInt(data[k]), 0);
                 bufs.push(buf);
                 bufsSize += buf.length;
               } else {
@@ -357,7 +357,7 @@ var EmpireSolClient = (function () {
                     throw "Invalid i64";
                   }
                   buf = Buffer.allocUnsafe(8);
-                  buf.writeBigInt64LE(BigInt(data[k][j]), 0);
+                  buf.writeBigInt64BE(BigInt(data[k][j]), 0);
                   bufs.push(buf);
                   bufsSize += buf.length;
                 }
@@ -1176,7 +1176,7 @@ var EmpireSolClient = (function () {
                 throw "Invalid u64";
               }
               buf = Buffer.allocUnsafe(8);
-              buf.writeBigUInt64LE(BigInt(data[k]), 0);
+              buf.writeBigUInt64BE(BigInt(data[k]), 0);
               bufs.push(buf);
               bufsSize += buf.length;
               break;
@@ -1257,7 +1257,7 @@ var EmpireSolClient = (function () {
       },
 
       getAllAssets: async () => {
-        var schemas = ["tools", "energy", "boosters"];
+        var schemas = ["tools", "energy", "boosters", "chests"];
         var assets = [];
         for (let schemaId of schemas) {
           var items = await instance.getAssets(schemaId);
