@@ -305,7 +305,7 @@ var EmpireSolClient = (function () {
                   throw "Invalid u64";
                 }
                 buf = Buffer.allocUnsafe(8);
-                buf.writeBigUInt64BE(BigInt(data[k]), 0);
+                buf.writeBigUInt64LE(BigInt(data[k]), 0);
                 bufs.push(buf);
                 bufsSize += buf.length;
               } else {
@@ -314,7 +314,7 @@ var EmpireSolClient = (function () {
                     throw "Invalid u64";
                   }
                   buf = Buffer.allocUnsafe(8);
-                  buf.writeBigUInt64BE(BigInt(data[k][j]), 0);
+                  buf.writeBigUInt64LE(BigInt(data[k][j]), 0);
                   bufs.push(buf);
                   bufsSize += buf.length;
                 }
@@ -348,7 +348,7 @@ var EmpireSolClient = (function () {
                   throw "Invalid i64";
                 }
                 buf = Buffer.allocUnsafe(8);
-                buf.writeBigInt64BE(BigInt(data[k]), 0);
+                buf.writeBigInt64LE(BigInt(data[k]), 0);
                 bufs.push(buf);
                 bufsSize += buf.length;
               } else {
@@ -357,7 +357,7 @@ var EmpireSolClient = (function () {
                     throw "Invalid i64";
                   }
                   buf = Buffer.allocUnsafe(8);
-                  buf.writeBigInt64BE(BigInt(data[k][j]), 0);
+                  buf.writeBigInt64LE(BigInt(data[k][j]), 0);
                   bufs.push(buf);
                   bufsSize += buf.length;
                 }
@@ -854,7 +854,6 @@ var EmpireSolClient = (function () {
         return quantity / 1000000000;
       },
       bridgeToken: async (amount, to) => {
-        console.log("Sol Bridge Token Called");
         amount = Number(amount);
         let config = await instance.getAccountData(CONFIG_ACCOUNT, "configs");
 
@@ -1176,7 +1175,7 @@ var EmpireSolClient = (function () {
                 throw "Invalid u64";
               }
               buf = Buffer.allocUnsafe(8);
-              buf.writeBigUInt64BE(BigInt(data[k]), 0);
+              buf.writeBigUInt64LE(BigInt(data[k]), 0);
               bufs.push(buf);
               bufsSize += buf.length;
               break;
