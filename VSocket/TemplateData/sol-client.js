@@ -214,6 +214,21 @@ var EmpireSolClient = (function () {
           instance.getSchema(schemaName)
         );
       },
+      getPDA: async seeds => {
+        let buffers = seeds.map(seed => {
+          if (typeof seed === "string") {
+            return Buffer.from(seed, "utf8");
+          } else if (typeof seed === "number") {
+            return Buffer.from([seed]);
+          } else {
+            return seed.toBuffer();
+          }
+        });
+        return (await solanaWeb3.PublicKey.findProgramAddress(
+          buffers,
+          PROGRAM
+        ))[0];
+      },
       getPAD: async (seeds, isSolProgram = false) => {
         let parsedSeeds = seeds.map(s => Buffer.from(s));
         return (await solanaWeb3.PublicKey.findProgramAddress(
