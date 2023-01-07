@@ -1141,6 +1141,85 @@ var EmpireSolClient = (function () {
           data
         });
       },
+      createStakeInstruction: async cards => {
+        const owner_pda = await instance.getPDA([
+          "stakesempireduels",
+          PROGRAM,
+          userPublicKey
+        ]);
+        keys = [
+          {
+            pubkey: userPublicKey,
+            isSigner: true,
+            isWritable: false
+          },
+          {
+            pubkey: owner_pda,
+            isSigner: false,
+            isWritable: true
+          },
+          {
+            pubkey: solanaWeb3.SystemProgram.programId,
+            isSigner: false,
+            isWritable: false
+          }
+        ];
+
+        for (let i = cards.length; i < 5; i++) {
+          cards.push(
+            new solanaWeb3.PublicKey([
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ])
+          );
+        }
+
+        return new solanaWeb3.TransactionInstruction({
+          keys,
+          programId: PROGRAM,
+          data: instance.convertToBytes(
+            "stake",
+            {
+              owner: userPublicKey.toBase58(),
+              mints: cards
+            },
+            {
+              owner: "pubkey",
+              mints: ["pubkey", 5]
+            }
+          )
+        });
+      },
       createAction: (action, data, schema) => {
         var buf1 = Buffer.from(action);
         var buf0 = Buffer.from([buf1.length]);
