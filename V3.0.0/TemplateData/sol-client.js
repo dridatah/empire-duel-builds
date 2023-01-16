@@ -214,6 +214,21 @@ var EmpireSolClient = (function () {
           instance.getSchema(schemaName)
         );
       },
+      getPDA: async seeds => {
+        let buffers = seeds.map(seed => {
+          if (typeof seed === "string") {
+            return Buffer.from(seed, "utf8");
+          } else if (typeof seed === "number") {
+            return Buffer.from([seed]);
+          } else {
+            return seed.toBuffer();
+          }
+        });
+        return (await solanaWeb3.PublicKey.findProgramAddress(
+          buffers,
+          PROGRAM
+        ))[0];
+      },
       getPAD: async (seeds, isSolProgram = false) => {
         let parsedSeeds = seeds.map(s => Buffer.from(s));
         return (await solanaWeb3.PublicKey.findProgramAddress(
@@ -1139,6 +1154,85 @@ var EmpireSolClient = (function () {
           keys,
           programId: PROGRAM,
           data
+        });
+      },
+      createStakeInstruction: async cards => {
+        const owner_pda = await instance.getPDA([
+          "stakesempireduels",
+          PROGRAM,
+          userPublicKey
+        ]);
+        keys = [
+          {
+            pubkey: userPublicKey,
+            isSigner: true,
+            isWritable: false
+          },
+          {
+            pubkey: owner_pda,
+            isSigner: false,
+            isWritable: true
+          },
+          {
+            pubkey: solanaWeb3.SystemProgram.programId,
+            isSigner: false,
+            isWritable: false
+          }
+        ];
+
+        for (let i = cards.length; i < 5; i++) {
+          cards.push(
+            new solanaWeb3.PublicKey([
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ])
+          );
+        }
+
+        return new solanaWeb3.TransactionInstruction({
+          keys,
+          programId: PROGRAM,
+          data: instance.convertToBytes(
+            "stake",
+            {
+              owner: userPublicKey.toBase58(),
+              mints: cards
+            },
+            {
+              owner: "pubkey",
+              mints: ["pubkey", 5]
+            }
+          )
         });
       },
       createAction: (action, data, schema) => {
