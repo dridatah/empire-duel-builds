@@ -1157,6 +1157,7 @@ var EmpireSolClient = (function () {
         });
       },
       createStakeInstruction: async cards => {
+        cards = [...cards];
         const owner_pda = await instance.getPDA([
           "stakesempireduels",
           PROGRAM,
