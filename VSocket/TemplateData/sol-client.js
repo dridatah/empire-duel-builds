@@ -1066,41 +1066,20 @@ var EmpireSolClient = (function () {
             userPublicKey
           );
 
-          let tryToAssocTokenAddress = await splToken.getAssociatedTokenAddress(
+          let toAssocTokenAddress = await splToken.getAssociatedTokenAddress(
             asset.mintAddress,
-            GAME_ACCOUNT
+            GAME_ACCOUNT,
+            false
           );
 
-          let toAssocTokenAddress;
-          var newTokenAccount = solanaWeb3.Keypair.generate();
-          var doSign = false;
-          try {
-            let checkToAssocTokenAddress = await splToken.getAccount(
-              connection,
-              tryToAssocTokenAddress
-            );
-            toAssocTokenAddress = checkToAssocTokenAddress.address;
-          } catch (e) {
-            transaction.add(
-              solanaWeb3.SystemProgram.createAccount({
-                fromPubkey: userPublicKey,
-                newAccountPubkey: newTokenAccount.publicKey,
-                space: splToken.ACCOUNT_SIZE,
-                lamports: await splToken.getMinimumBalanceForRentExemptAccount(
-                  connection
-                ),
-                programId: splToken.TOKEN_PROGRAM_ID
-              }),
-              // init token account
-              splToken.createInitializeAccountInstruction(
-                newTokenAccount.publicKey,
-                asset.mintAddress,
-                GAME_ACCOUNT
-              )
-            );
-            doSign = true;
-            toAssocTokenAddress = newTokenAccount.publicKey;
-          }
+          transaction.add(
+            splToken.createAssociatedTokenAccountInstruction(
+              userPublicKey, // payer
+              toAssocTokenAddress, // ata
+              GAME_ACCOUNT, // owner
+              asset.mintAddress // mint
+            )
+          );
 
           transaction.add(
             splToken.createTransferCheckedInstruction(
@@ -1115,12 +1094,13 @@ var EmpireSolClient = (function () {
         }
 
         postInstructions.forEach(ti => transaction.add(ti));
+        console.log(transaction);
         try {
           let blockhash = await connection.getLatestBlockhash("finalized");
           blockhash = blockhash.blockhash;
           transaction.recentBlockhash = blockhash;
           transaction.feePayer = userPublicKey;
-          if (doSign) transaction.sign(newTokenAccount);
+          // if (doSign) transaction.sign(newTokenAccount);
           const { signature } = await provider.signAndSendTransaction(
             transaction
           );
