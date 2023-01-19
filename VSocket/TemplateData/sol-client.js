@@ -1072,15 +1072,21 @@ var EmpireSolClient = (function () {
             false
           );
 
-          transaction.add(
-            splToken.createAssociatedTokenAccountInstruction(
-              userPublicKey, // payer
-              toAssocTokenAddress, // ata
-              GAME_ACCOUNT, // owner
-              asset.mintAddress // mint
-            )
-          );
-
+          try {
+            let checkToAssocTokenAddress = await splToken.getAccount(
+              connection,
+              toAssocTokenAddress
+            );
+          } catch (e) {
+            transaction.add(
+              splToken.createAssociatedTokenAccountInstruction(
+                userPublicKey, // payer
+                toAssocTokenAddress, // ata
+                GAME_ACCOUNT, // owner
+                asset.mintAddress // mint
+              )
+            );
+          }
           transaction.add(
             splToken.createTransferCheckedInstruction(
               fromAssocTokenAddress,
