@@ -435,7 +435,7 @@ var EmpireWaxClient = (function() {
         return link;
       },
       getAllAssets: async (page = 1, limit = 100) => {
-        var schemas = ["tools", "energy", "boosters", "chests"];
+        var schemas = ["tools", "energy", "boosters", "chests","sites"];
         var assets = [];
         for (let schemaId of schemas) {
           var items = await instance.getAssets(schemaId, page, limit);

@@ -1072,15 +1072,21 @@ var EmpireSolClient = (function () {
             false
           );
 
-          transaction.add(
-            splToken.createAssociatedTokenAccountInstruction(
-              userPublicKey, // payer
-              toAssocTokenAddress, // ata
-              GAME_ACCOUNT, // owner
-              asset.mintAddress // mint
-            )
-          );
-
+          try {
+            let checkToAssocTokenAddress = await splToken.getAccount(
+              connection,
+              toAssocTokenAddress
+            );
+          } catch (e) {
+            transaction.add(
+              splToken.createAssociatedTokenAccountInstruction(
+                userPublicKey, // payer
+                toAssocTokenAddress, // ata
+                GAME_ACCOUNT, // owner
+                asset.mintAddress // mint
+              )
+            );
+          }
           transaction.add(
             splToken.createTransferCheckedInstruction(
               fromAssocTokenAddress,
@@ -1331,7 +1337,7 @@ var EmpireSolClient = (function () {
       },
 
       getAllAssets: async () => {
-        var schemas = ["tools", "energy", "boosters", "chests"];
+        var schemas = ["tools", "energy", "boosters", "chests","sites"];
         var assets = [];
         for (let schemaId of schemas) {
           var items = await instance.getAssets(schemaId);
