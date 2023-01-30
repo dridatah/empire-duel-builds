@@ -145,6 +145,13 @@ var EmpireWaxClient = (function() {
             reverse: false,
             show_payer: false
           });
+          if (result.rows.length === 0) return { rows: [], isError: false };
+          if (
+            isNaN(Number(pid)) &&
+            result.rows[0][Object.keys(result.rows[0])[0]] !== pid
+          )
+            return { rows: [], isError: false };
+
           return { rows: result.rows, isError: false };
         } catch (e) {
           return {

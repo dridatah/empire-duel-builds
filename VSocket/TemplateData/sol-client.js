@@ -287,7 +287,7 @@ var EmpireSolClient = (function () {
           let sk = schema[k].constructor === Array ? schema[k][0] : schema[k];
           let sc = schema[k].constructor === Array ? schema[k][1] : 1;
           if (!data.hasOwnProperty(k)) continue;
-          if (!data[k]) {
+          if (typeof data[k] === "undefined") {
             console.error("Schema must have all keys, convertToBytes");
             return null;
           }
@@ -1101,6 +1101,111 @@ var EmpireSolClient = (function () {
 
         postInstructions.forEach(ti => transaction.add(ti));
         console.log(transaction);
+        try {
+          let blockhash = await connection.getLatestBlockhash("finalized");
+          blockhash = blockhash.blockhash;
+          transaction.recentBlockhash = blockhash;
+          transaction.feePayer = userPublicKey;
+          // if (doSign) transaction.sign(newTokenAccount);
+          const { signature } = await provider.signAndSendTransaction(
+            transaction
+          );
+          return { isError: false, transactionID: signature };
+        } catch (e) {
+          console.error(e);
+          return { isError: true, errorCode: e.code, errorMessage: e.message };
+        }
+      },
+      stakeAssets: async (assets, postInstructions = []) => {
+        if (!provider) {
+          throw "err1";
+        }
+        let connection = instance.createConnection();
+        const transaction = new solanaWeb3.Transaction();
+
+        for (let i = 0; i < assets.length; i++) {
+          let asset = instance.getAssetCache(assets[i]);
+
+          let fromAssocTokenAddress = await splToken.getAssociatedTokenAddress(
+            asset.mintAddress,
+            userPublicKey
+          );
+
+          let toAssocTokenAddress = await splToken.getAssociatedTokenAddress(
+            asset.mintAddress,
+            GAME_ACCOUNT,
+            false
+          );
+
+          /*let account_owner = next_account_info(account_info_iter)?;
+            let account_stake_pda = next_account_info(account_info_iter)?;
+            let account_from = next_account_info(account_info_iter)?;
+            let account_to = next_account_info(account_info_iter)?;
+            let account_mint = next_account_info(account_info_iter)?;
+            let account_spl = next_account_info(account_info_iter)?;
+            let account_system = next_account_info(account_info_iter)?;*/
+
+          let keys = [
+            { pubkey: userPublicKey, isSigner: true, isWritable: true },
+            {
+              pubkey: await instance.getPDA([
+                "stakesempireduels",
+                PROGRAM,
+                userPublicKey
+              ]),
+              isSigner: false,
+              isWritable: true
+            },
+            {
+              pubkey: fromAssocTokenAddress,
+              isSigner: false,
+              isWritable: true
+            },
+            { pubkey: toAssocTokenAddress, isSigner: false, isWritable: true },
+            { pubkey: asset.mintAddress, isSigner: false, isWritable: true },
+            {
+              pubkey: splToken.TOKEN_PROGRAM_ID,
+              isSigner: false,
+              isWritable: false
+            },
+            {
+              pubkey: solanaWeb3.SystemProgram.programId,
+              isSigner: false,
+              isWritable: false
+            }
+          ];
+
+          try {
+            await splToken.getAccount(connection, toAssocTokenAddress);
+          } catch (e) {
+            transaction.add(
+              splToken.createAssociatedTokenAccountInstruction(
+                userPublicKey, // payer
+                toAssocTokenAddress, // ata
+                GAME_ACCOUNT, // owner
+                asset.mintAddress // mint
+              )
+            );
+          }
+
+          transaction.add(
+            new solanaWeb3.TransactionInstruction({
+              keys,
+              programId: PROGRAM,
+              data: instance.convertToBytes(
+                "stake",
+                {
+                  index: i
+                },
+                {
+                  index: "u8"
+                }
+              )
+            })
+          );
+        }
+
+        postInstructions.forEach(ti => transaction.add(ti));
         try {
           let blockhash = await connection.getLatestBlockhash("finalized");
           blockhash = blockhash.blockhash;
