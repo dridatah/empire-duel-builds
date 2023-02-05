@@ -145,6 +145,13 @@ var EmpireWaxClient = (function() {
             reverse: false,
             show_payer: false
           });
+          if (result.rows.length === 0) return { rows: [], isError: false };
+          if (
+            isNaN(Number(pid)) &&
+            result.rows[0][Object.keys(result.rows[0])[0]] !== pid
+          )
+            return { rows: [], isError: false };
+
           return { rows: result.rows, isError: false };
         } catch (e) {
           return {
@@ -435,7 +442,7 @@ var EmpireWaxClient = (function() {
         return link;
       },
       getAllAssets: async (page = 1, limit = 100) => {
-        var schemas = ["tools", "energy", "boosters", "chests","sites"];
+        var schemas = ["tools", "energy", "boosters", "chests", "sites"];
         var assets = [];
         for (let schemaId of schemas) {
           var items = await instance.getAssets(schemaId, page, limit);

@@ -36,5 +36,9 @@
   "g-hybrid-planter": { "templateId": "530658", "type": "tools" },
   "g-post-mill": { "templateId": "530659", "type": "energy" },
   "g-tower-mill": { "templateId": "530660", "type": "energy" },
-  "g-fan-mill": { "templateId": "530661", "type": "energy" }
+  "g-fan-mill": { "templateId": "530661", "type": "energy" },
+  "complimentary": { "templateId": "604312", "type": "chests" },
+  "resource-chest": { "templateId": "524872", "type": "chests" },
+  "oil-rig": { "templateId": "605930", "type": "sites" },
+  "crafting-workshop": { "templateId": "605928", "type": "sites" }
 }
