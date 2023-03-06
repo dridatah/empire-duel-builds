@@ -73,15 +73,16 @@ var EmpireWaxClient = (function() {
       },
       // FETCHING FUNCTIONS
       getAssets: async (schema, page, limit = 10) => {
-        // check node_modules/atomicassets/build/API/Explorer/index.js file
-        // for all simplified usage of the AA API
+        let exclusions = await instance.getGameTable("exclusions");
+        exclusions = exclusions.rows.map(item => item.template_id).join(",");
         const aa = instance.getAA();
         return await aa.getAssets({
           collection_name: COLLECTION_NAME,
           schema_name: schema,
           owner: waxActor,
           page: page,
-          limit: limit
+          limit: limit,
+          template_blacklist: exclusions
         });
       },
       getAsset: async id => {
@@ -145,6 +146,13 @@ var EmpireWaxClient = (function() {
             reverse: false,
             show_payer: false
           });
+          if (result.rows.length === 0) return { rows: [], isError: false };
+          if (
+            isNaN(Number(pid)) &&
+            result.rows[0][Object.keys(result.rows[0])[0]] !== pid
+          )
+            return { rows: [], isError: false };
+
           return { rows: result.rows, isError: false };
         } catch (e) {
           return {
@@ -435,7 +443,7 @@ var EmpireWaxClient = (function() {
         return link;
       },
       getAllAssets: async (page = 1, limit = 100) => {
-        var schemas = ["tools", "energy", "boosters", "chests","sites"];
+        var schemas = ["tools", "energy", "boosters", "chests", "sites"];
         var assets = [];
         for (let schemaId of schemas) {
           var items = await instance.getAssets(schemaId, page, limit);

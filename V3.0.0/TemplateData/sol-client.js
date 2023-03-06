@@ -47,42 +47,42 @@ var EmpireSolClient = (function () {
   var assetsCache = [];
 
   const PROGRAM = new solanaWeb3.PublicKey(
-    "CyyfmzuwCfSFkyz3ASkxdv1ikjPcKGGyTkoZeg3G8YLC"
+    "85kgTHaoCqo3zNqosQw5HaR1pBcJ3ecC1AYRp6vhPniQ"
   );
 
   const CONFIG_ACCOUNT = new solanaWeb3.PublicKey(
-    "Ab9jHLrZrqNdouobkVxXjwCwQkDUPjuXhX23kMpeNEG2"
+    "2YVVmpEjBrSqRisNDfKBmVseEFs2qn4nLvpV8kjk6SAF"
   );
 
   const BRIDGE_ACCOUNT = new solanaWeb3.PublicKey(
-    "CF69dAJEaLd5wUKNRR9zH6JhcB7DDi3ieactx8aPzZy4"
+    "J4513NeEuheJ34hk41YFetYav4Hb2riC6FZgzXoD2VqX"
   );
 
   const TOKEN = new solanaWeb3.PublicKey(
-    "4rxhygepn3zBnDfV2XzjziAryDJgtCfk95MSLVLYi6FQ"
+    "DNAF3BjhfGcCYrzibuEqBRvCSbYydP8BWkvF42s2uBW3"
   );
 
   const TOKEN_ACCOUNT = new solanaWeb3.PublicKey(
-    "92qWZbhp1jMJfKPkcaMzHm5x1XgiKnBNhiJwdbBAVxkb"
+    "4zQY2ptxEJJ9r7Z7TtXDAFJWwjzsQ2b1SULsddaW7SuB"
   );
 
   const GAME_ACCOUNT = new solanaWeb3.PublicKey(
-    "Eu2zKbD1mAGMwg1wNQZJz8F13KwWTKEx3cZTwMUhDAXE"
+    "8ftSBX6bWKUAZrB9KmvdvsZT42F9PkVaP12wgbTKeiFf"
   );
 
   const COLLECTION_ACCOUNT = new solanaWeb3.PublicKey(
-    "C58UgunbkKauvQMeLKHCreYdpeffokPBodRojbU8Rnv7"
+    "CRRoz9nhYUsVwCxsx2pquyBgtY1NQji7QiCkaL6dUYRK"
   );
 
   const SOL_PROGRAM = new solanaWeb3.PublicKey(
-    "8Tnx3551Nf8cZcQNFSaUAhuDUYzEXdZcchq9XtLzC3qd"
+    "9s3yZL1KJ1uwY1BF7iD3zKMfJ1qnnQTJDHRZys16NV4T"
   );
 
   const SOL_BALANCE_ACCOUNT = new solanaWeb3.PublicKey(
-    "97V5dGHUjUVpu7aCoJg9xcFyUjN6zhgCwUKhidBS7d9t"
+    "3zKuJKKDg9E2yyYTLPrZr3GapKWSrrzn93L9PAVhrF5v"
   );
 
-  const MAINNET_ENDPOINT = "";
+  const MAINNET_ENDPOINT = "https://solana-mainnet.g.alchemy.com/v2/uh47isyuPGMOkYzq19F3P5q_difqzI_P";
 
   const DATA_SCHEMAS = {
     validation: {

@@ -1,8 +1,8 @@
 var EmpireWaxClient = (function() {
   const TESTNET_AA_ENDPOINT = "https://test.wax.api.atomicassets.io";
-  const MAINNET_AA_ENDPOINT = "https://api.waxtest.alohaeos.com";
+  const MAINNET_AA_ENDPOINT = "https://empireduels-wax-aa.global.binfra.one";
   const TESTNET_ENDPOINT = "https://waxtest.eu.eosamsterdam.net";
-  const MAINNET_ENDPOINT = "https://api.waxtest.alohaeos.com";
+  const MAINNET_ENDPOINT = "https://empireduels-wax-rpc.global.binfra.one";
   const TEST_CHAIN_ID =
     "f16b1833c747c43682f4386fca9cbb327929334a762755ebec17f6f23c9b8a12";
   const MAINNET_CHAIN_ID =
