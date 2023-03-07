@@ -147,7 +147,7 @@ var EmpireSolClient = (function () {
       createConnection: () => {
         if (!connection) {
           connection = new solanaWeb3.Connection(
-            solanaWeb3.clusterApiUrl(isTest ? "devnet" : MAINNET_ENDPOINT),
+            isTest ? solanaWeb3.clusterApiUrl("devnet") : MAINNET_ENDPOINT,
             "confirmed"
           );
         }
