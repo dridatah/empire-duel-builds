@@ -82,7 +82,7 @@ var EmpireSolClient = (function () {
     "3zKuJKKDg9E2yyYTLPrZr3GapKWSrrzn93L9PAVhrF5v"
   );
 
-  const MAINNET_ENDPOINT = "https://solana-mainnet.g.alchemy.com/v2/uh47isyuPGMOkYzq19F3P5q_difqzI_P";
+  const MAINNET_ENDPOINT = "https://light-billowing-cherry.solana-mainnet.quiknode.pro/";
 
   const DATA_SCHEMAS = {
     validation: {
