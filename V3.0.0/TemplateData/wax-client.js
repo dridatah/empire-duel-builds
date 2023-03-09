@@ -1,4 +1,4 @@
-var EmpireWaxClient = (function() {
+var EmpireWaxClient = (function () {
   const TESTNET_AA_ENDPOINT = "https://test.wax.api.atomicassets.io";
   const MAINNET_AA_ENDPOINT = "https://empireduels-wax-aa.global.binfra.one";
   const TESTNET_ENDPOINT = "https://waxtest.eu.eosamsterdam.net";
@@ -19,19 +19,24 @@ var EmpireWaxClient = (function() {
   var aaAPI = null;
   var waxInstance = null;
   var waxActor = null;
+  var waxPubKeys = null;
   var waxWallet = null;
 
   function createInstance(isTest) {
     return {
-      setWaxAddress: v => {
+      setWaxAddress: (v) => {
         waxActor = v;
       },
-      setIsAnchorWallet: isAnchor => {
+      setPubKeys: (v) => {
+        waxPubKeys = v;
+      },
+      setIsAnchorWallet: (isAnchor) => {
         waxWallet = isAnchor ? "anchor" : "cloud";
       },
       getWaxAddress: () => waxActor,
+      getPubKeys: () => waxPubKeys,
       isAnchorWallet: () => waxWallet === "anchor",
-      isAnchorError: e => e === "anchorerr",
+      isAnchorError: (e) => e === "anchorerr",
       getTokenBalance: async (waxAddress = null) => {
         waxAddress = waxAddress ? waxAddress : waxActor;
         if (!waxAddress) {
@@ -48,9 +53,10 @@ var EmpireWaxClient = (function() {
       },
       loginWithCloud: async () => {
         try {
-          const wax = instance.connectCloud();
+          const wax = instance.connectCloud(null, true);
           await wax.login();
           waxActor = wax.userAccount;
+          waxPubKeys = wax.pubKeys;
           waxWallet = "cloud";
         } catch (e) {
           console.log(e);
@@ -68,13 +74,13 @@ var EmpireWaxClient = (function() {
       validate: async (waxAddress, uniqueCode) => {
         return await instance.gameAction("validate", {
           user: waxAddress,
-          code: uniqueCode
+          code: uniqueCode,
         });
       },
       // FETCHING FUNCTIONS
       getAssets: async (schema, page, limit = 10) => {
         let exclusions = await instance.getGameTable("exclusions");
-        exclusions = exclusions.rows.map(item => item.template_id).join(",");
+        exclusions = exclusions.rows.map((item) => item.template_id).join(",");
         const aa = instance.getAA();
         return await aa.getAssets({
           collection_name: COLLECTION_NAME,
@@ -82,10 +88,10 @@ var EmpireWaxClient = (function() {
           owner: waxActor,
           page: page,
           limit: limit,
-          template_blacklist: exclusions
+          template_blacklist: exclusions,
         });
       },
-      getAsset: async id => {
+      getAsset: async (id) => {
         // check node_modules/atomicassets/build/API/Explorer/index.js file
         // for all simplified usage of the AA API
         const aa = instance.getAA();
@@ -97,13 +103,13 @@ var EmpireWaxClient = (function() {
       getGameRowScoped: async (table, scope, pid) => {
         return await instance.getRow(table, pid, scope, GAME_CONTRACT);
       },
-      getGameTable: async table => {
+      getGameTable: async (table) => {
         return await instance.getTable(table, GAME_CONTRACT, GAME_CONTRACT);
       },
       getGameTableScoped: async (table, scope) => {
         return await instance.getTable(table, scope, GAME_CONTRACT);
       },
-      getGameTableForUser: async table => {
+      getGameTableForUser: async (table) => {
         return await instance.getTable(table, waxActor, GAME_CONTRACT);
       },
       getTokenRow: async (table, pid) => {
@@ -144,7 +150,7 @@ var EmpireWaxClient = (function() {
             table: table,
             lower_bound: pid,
             reverse: false,
-            show_payer: false
+            show_payer: false,
           });
           if (result.rows.length === 0) return { rows: [], isError: false };
           if (
@@ -159,7 +165,7 @@ var EmpireWaxClient = (function() {
             rows: [],
             isError: true,
             errorMessage: e.message,
-            errorCode: e.code
+            errorCode: e.code,
           };
         }
       },
@@ -172,7 +178,7 @@ var EmpireWaxClient = (function() {
             table: table,
             reverse: isReverse,
             show_payer: false,
-            limit: limit
+            limit: limit,
           });
           return { rows: result.rows, isError: false };
         } catch (e) {
@@ -180,7 +186,7 @@ var EmpireWaxClient = (function() {
             rows: [],
             isError: true,
             errorMessage: e.message,
-            errorCode: e.code
+            errorCode: e.code,
           };
         }
       },
@@ -190,7 +196,7 @@ var EmpireWaxClient = (function() {
           from: waxActor,
           to: GAME_CONTRACT,
           asset_ids: assetIds,
-          memo
+          memo,
         });
       },
       transferToken: async (quantity, memo = "") => {
@@ -199,7 +205,7 @@ var EmpireWaxClient = (function() {
           from: waxActor,
           to: GAME_CONTRACT,
           quantity,
-          memo
+          memo,
         });
       },
       gameAction: async (name, data) => {
@@ -214,11 +220,11 @@ var EmpireWaxClient = (function() {
             authorization: [
               {
                 actor: waxActor,
-                permission: "active"
-              }
+                permission: "active",
+              },
             ],
-            data: data
-          }
+            data: data,
+          },
         ]);
       },
       createToken: (q, sym, d) => {
@@ -243,33 +249,39 @@ var EmpireWaxClient = (function() {
             authorization: [
               {
                 actor: waxActor,
-                permission: "active"
-              }
+                permission: "active",
+              },
             ],
             data: {
               from: waxActor,
               to: to,
               quantity: instance.createToken(amount, "WAX", 8),
-              memo: ""
-            }
-          }
+              memo: "",
+            },
+          },
         ];
 
         return await instance.runActions(actions);
       },
       getBridgeTokenCost: async () => {
         let config = await instance.getGameTable("config");
-        var quantity = config.rows.find(it => it.key === "tknbcost").int_value;
+        var quantity = config.rows.find(
+          (it) => it.key === "tknbcost"
+        ).int_value;
         return quantity / 100000000;
       },
       getBridgeNFTCost: async () => {
         let config = await instance.getGameTable("config");
-        var quantity = config.rows.find(it => it.key === "nftbcost").int_value;
+        var quantity = config.rows.find(
+          (it) => it.key === "nftbcost"
+        ).int_value;
         return quantity / 100000000;
       },
       bridgeNFT: async (asset, to) => {
         let config = await instance.getGameTable("config");
-        var quantity = config.rows.find(it => it.key === "nftbcost").int_value;
+        var quantity = config.rows.find(
+          (it) => it.key === "nftbcost"
+        ).int_value;
         var memo = `bridge:${quantity},0,${asset},0,${to}`;
         const actions = [
           {
@@ -278,15 +290,15 @@ var EmpireWaxClient = (function() {
             authorization: [
               {
                 actor: waxActor,
-                permission: "active"
-              }
+                permission: "active",
+              },
             ],
             data: {
               from: waxActor,
               to: GAME_CONTRACT,
               quantity: instance.createToken(quantity, "WAX", 8),
-              memo
-            }
+              memo,
+            },
           },
           {
             account: "atomicassets",
@@ -294,16 +306,16 @@ var EmpireWaxClient = (function() {
             authorization: [
               {
                 actor: waxActor,
-                permission: "active"
-              }
+                permission: "active",
+              },
             ],
             data: {
               from: waxActor,
               to: GAME_CONTRACT,
               asset_ids: [asset],
-              memo
-            }
-          }
+              memo,
+            },
+          },
         ];
 
         return await instance.runActions(actions);
@@ -313,7 +325,9 @@ var EmpireWaxClient = (function() {
 
         amount = Number(amount);
         let config = await instance.getGameTable("config");
-        var quantity = config.rows.find(it => it.key === "tknbcost").int_value;
+        var quantity = config.rows.find(
+          (it) => it.key === "tknbcost"
+        ).int_value;
         var memo = `bridge:${quantity},1,0,${amount * EDL_DECIMALS},${to}`;
         const actions = [
           {
@@ -322,15 +336,15 @@ var EmpireWaxClient = (function() {
             authorization: [
               {
                 actor: waxActor,
-                permission: "active"
-              }
+                permission: "active",
+              },
             ],
             data: {
               from: waxActor,
               to: GAME_CONTRACT,
               quantity: instance.createToken(quantity, "WAX", 8),
-              memo
-            }
+              memo,
+            },
           },
           {
             account: "empireduelst",
@@ -338,22 +352,22 @@ var EmpireWaxClient = (function() {
             authorization: [
               {
                 actor: waxActor,
-                permission: "active"
-              }
+                permission: "active",
+              },
             ],
             data: {
               from: waxActor,
               to: GAME_CONTRACT,
               quantity: instance.createToken(amount * EDL_DECIMALS, "EDL", 6),
-              memo
-            }
-          }
+              memo,
+            },
+          },
         ];
 
         return await instance.runActions(actions);
       },
       // low level
-      runActions: async actions => {
+      runActions: async (actions) => {
         // returns false on success
         if (!waxActor) {
           console.log("Wax actor is undefined");
@@ -367,11 +381,11 @@ var EmpireWaxClient = (function() {
           try {
             await wax.api.transact(
               {
-                actions: actions
+                actions: actions,
               },
               {
                 blocksBehind: 3,
-                expireSeconds: 1200
+                expireSeconds: 1200,
               }
             );
             return false;
@@ -399,12 +413,12 @@ var EmpireWaxClient = (function() {
         if (!aaAPI) {
           var endpoint = isTest ? TESTNET_AA_ENDPOINT : MAINNET_AA_ENDPOINT;
           aaAPI = new atomicassets.ExplorerApi(endpoint, "atomicassets", {
-            fetch
+            fetch,
           });
         }
         return aaAPI;
       },
-      connectCloud: (endpoint = null) => {
+      connectCloud: (endpoint = null, login = false) => {
         if (endpoint === null) {
           endpoint = isTest ? TESTNET_ENDPOINT : MAINNET_ENDPOINT;
           if (!endpoint) {
@@ -413,10 +427,17 @@ var EmpireWaxClient = (function() {
           }
         }
 
-        if (!waxInstance) {
+        if (login) {
           waxInstance = new waxjs.WaxJS({
             rpcEndpoint: endpoint,
-            tryAutoLogin: false
+            tryAutoLogin: false,
+          });
+        } else if (!waxInstance) {
+          waxInstance = new waxjs.WaxJS({
+            rpcEndpoint: endpoint,
+            tryAutoLogin: false,
+            userAccount: instance.getWaxAddress(),
+            pubKeys: instance.getPubKeys(),
           });
         }
 
@@ -436,9 +457,9 @@ var EmpireWaxClient = (function() {
           chains: [
             {
               chainId: isTest ? TEST_CHAIN_ID : MAINNET_CHAIN_ID,
-              nodeUrl: endpoint
-            }
-          ]
+              nodeUrl: endpoint,
+            },
+          ],
         });
         return link;
       },
@@ -450,16 +471,16 @@ var EmpireWaxClient = (function() {
           assets.push(...items);
         }
         return assets;
-      }
+      },
     };
   }
 
   return {
-    getInstance: function(isTest = false) {
+    getInstance: function (isTest = false) {
       if (!instance) {
         instance = createInstance(isTest);
       }
       return instance;
-    }
+    },
   };
 })();
